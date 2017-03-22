@@ -13,6 +13,8 @@ define('TOP', 0);
 define('RIGHT', 1);
 define('BOTTOM', 2);
 define('LEFT', 3);
+define('EVEN', 0);
+define('ODD', 1);
 
 class GeoHash {
 
@@ -28,6 +30,90 @@ class GeoHash {
 		't' => '11001', 'u' => '11010', 'v' => '11011', 'w' => '11100', 'x' => '11101',
 		'y' => '11110', 'z' => '11111',
 	);
+
+	/*
+	 * // base32偶数位(第一位记为0，为偶数)相邻字符表
+	 *
+	 * b  c  f  g  u  v  y  z
+	 * 8  9  d  e  s  t  w  x
+	 * 2  3  6  7  k  m  q  r
+	 * 0  1  4  5  h  j  n  p
+	 *
+	 *
+	 * // base32奇数位(第一位记为0，为偶数)相邻字符表
+	 *
+	 * p  r  x  z
+	 * n  q  w  y
+	 * j  m  t  v
+	 * h  k  s  u
+	 * 5  7  e  g
+	 * 4  6  d  f
+	 * 1  3  9  c
+	 * 0  2  8  b
+	 */
+
+	private $_neighborChars = array(
+		EVEN => array(
+			TOP    => '238967debc01fg45kmstqrwxuvhjyznp',
+			RIGHT  => '14365h7k9dcfesgujnmqp0r2twvyx8zb',
+			BOTTOM => 'bc01fg45238967deuvhjyznpkmstqrwx',
+			LEFT   => 'p0r21436x8zb9dcf5h7kjnmqesgutwvy',
+		),
+	);
+
+	private $_borderChars = array(
+		EVEN => array(
+			TOP    => 'bcfguvyz',
+			RIGHT  => 'prxz',
+			BOTTOM => '0145hjnp',
+			LEFT   => '028b',
+		),
+	);
+
+	/**
+	 * 构造方法
+	 */
+	private function __construct() {
+		// 根据镜像翻转关系设置奇数位的情况
+		$this->_neighborChars[ODD] = array(
+			TOP    => $this->_neighborChars[EVEN][RIGHT],
+			RIGHT  => $this->_neighborChars[EVEN][TOP],
+			BOTTOM => $this->_neighborChars[EVEN][LEFT],
+			LEFT   => $this->_neighborChars[EVEN][BOTTOM],
+		);
+
+		$this->_borderChars[ODD] = array(
+			TOP    => $this->_borderChars[EVEN][RIGHT],
+			RIGHT  => $this->_borderChars[EVEN][TOP],
+			BOTTOM => $this->_borderChars[EVEN][LEFT],
+			LEFT   => $this->_borderChars[EVEN][BOTTOM],
+		);
+	}
+
+	/**
+	 * 计算周边矩阵的GeoHash
+	 *
+	 * @param string $hash 已知geoHash
+	 * @param string $direction 方向
+	 * @return string geoHash
+	 */
+	public function _calcNeighbor($hash, $direction) {
+		$length = strlen($hash);
+		if ($length == 0) {
+			return '';
+		}
+		$lastChar = $hash{$length - 1};
+		$evenOrOdd = ($length - 1) % 2;
+		$baseHash = substr($hash, 0, -1);
+		if (strpos($this->_borderChars[$evenOrOdd][$direction], $lastChar) !== false) {
+			$baseHash = $this->_calcNeighbor($baseHash, $direction);
+		}
+		if (isset($baseHash{0})) {
+			return $baseHash . $this->_neighborChars[$evenOrOdd][$direction]{strpos($this->_charPool, $lastChar)};
+		} else {
+			return '';
+		}
+	}
 
 	/**
 	 * 将数值进行二进制编码
@@ -268,9 +354,37 @@ class GeoHash {
 		// 二进制解码
 		$long = $this->_binDecode($longBin, -180, 180);
 		$lat = $this->_binDecode($latBin, -90, 90);
-		// 根据经度修正经纬度
+		// 根据精度修正经纬度
 		$long = round($long, $this->_calcDecodePrecision(strlen($longBin), -180, 180));
 		$lat = round($lat, $this->_calcDecodePrecision(strlen($latBin), -90, 90));
 		return array($long, $lat);
+	}
+
+	/**
+	 * 获取周边8个矩阵的地理编码
+	 *
+	 * @param string $hash 已知GeoHash
+	 * @return array
+	 */
+	public function neighbors($hash) {
+		$hashNorth = $this->_calcNeighbor($hash, TOP);
+		$hashEast = $this->_calcNeighbor($hash, RIGHT);
+		$hashSouth = $this->_calcNeighbor($hash, BOTTOM);
+		$hashWest = $this->_calcNeighbor($hash, LEFT);
+
+		$hashNorthEast = $this->_calcNeighbor($hashNorth, RIGHT);
+		$hashSouthEast = $this->_calcNeighbor($hashSouth, RIGHT);
+		$hashSouthWest = $this->_calcNeighbor($hashSouth, LEFT);
+		$hashNorthWest = $this->_calcNeighbor($hashNorth, LEFT);
+		return array(
+			'North'     => &$hashNorth,
+			'East'      => &$hashEast,
+			'South'     => &$hashSouth,
+			'West'      => &$hashWest,
+			'NorthEast' => &$hashNorthEast,
+			'SouthEast' => &$hashSouthEast,
+			'SouthWest' => &$hashSouthWest,
+			'NorthWest' => &$hashNorthWest,
+		);
 	}
 }
