@@ -1,12 +1,12 @@
 {
-	"name": "chency147/GeoHash",
+	"name": "chency147/geohash",
 	"description": "A util to transform a pair of longitude and latitude to geohash.",
 	"license": "MIT",
 	"keywords": [
 		"GeoHash"
 	],
 	"version": "0.0.1",
-	"homepage": "https://github.com/chency147/GeoHash",
+	"homepage": "https://github.com/chency147/geohash",
 	"authors": [
 		{
 			"name": "Rick Chen",
