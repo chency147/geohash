@@ -42,3 +42,6 @@ tags
 ### JetBrains template
 .idea/
 
+### Composer
+vendor/
+composer.lock

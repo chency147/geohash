@@ -7,7 +7,7 @@
  * Date: 17-3-20
  * Time: 上午9:48
  */
-namespace chency147\geohash;
+namespace Chency147\GeoHash;
 
 define('TOP', 0);
 define('RIGHT', 1);
@@ -73,7 +73,7 @@ class GeoHash {
 	/**
 	 * 构造方法
 	 */
-	private function __construct() {
+	public function __construct() {
 		// 根据镜像翻转关系设置奇数位的情况
 		$this->_neighborChars[ODD] = array(
 			TOP    => $this->_neighborChars[EVEN][RIGHT],

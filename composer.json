@@ -1,0 +1,28 @@
+{
+	"name": "chency147/GeoHash",
+	"description": "A util to transform a pair of longitude and latitude to geohash.",
+	"license": "MIT",
+	"keywords": [
+		"GeoHash"
+	],
+	"version": "0.0.1",
+	"homepage": "https://github.com/chency147/GeoHash",
+	"authors": [
+		{
+			"name": "Rick Chen",
+			"email": "313797922@qq.com",
+			"homepage": "https://blog.youduanwang.com/"
+		}
+	],
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "@stable"
+	},
+	"autoload": {
+		"psr-4": {
+			"Chency147\\GeoHash\\": "src/"
+		}
+	}
+}
